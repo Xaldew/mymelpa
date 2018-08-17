@@ -199,7 +199,7 @@ similar, which will provide the GNU timeout program as
   :group 'package-build
   :type '(file :must-match t))
 
-(defcustom package-build-timeout-secs nil
+(defcustom package-build-timeout-secs 6000
   "Wait this many seconds for external processes to complete.
 
 If an external process takes longer than specified here to

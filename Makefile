@@ -75,7 +75,7 @@ $(addprefix -L ,$(LOAD_PATH)) \
 --load package-build.el \
 --eval
 
-TIMEOUT := $(shell which timeout && echo "-k 60 600")
+TIMEOUT := $(shell which timeout && echo "-k 600 6000")
 
 .PHONY: clean build summarise json html sandbox
 .FORCE:
