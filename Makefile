@@ -78,7 +78,7 @@ BUILD_PACKAGES ?=
 BUILD_TARGETS  ?= archive-contents sign
 
 # Timeout used when building a package.
-TIMEOUT := $(shell which timeout && echo "-k 60 600")
+TIMEOUT := $(shell which timeout && echo "-k 6000 8000")
 # Seconds to sleep after building a single package.
 PAUSE ?= 0
 
