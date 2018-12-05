@@ -1,1 +1,0 @@
-(dap-mode :repo "yyoncho/dap-mode" :fetcher github)
