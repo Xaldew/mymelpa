@@ -1,0 +1,3 @@
+(ob-lilypond :fetcher github
+             :repo "mjago/ob-lilypond"
+             :files ("lisp/*.el"))
