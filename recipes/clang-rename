@@ -1,0 +1,4 @@
+(clang-rename
+ :fetcher github
+ :repo "llvm/llvm-project"
+ :files ("clang/tools/clang-rename/clang-rename.el"))
