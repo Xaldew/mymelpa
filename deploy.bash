@@ -5,6 +5,6 @@ echo '[]' > html/download_counts.json
 echo '{}' > html/build-status.json
 for pkg in html/packages/archive-contents html/packages/*.tar;
 do
-    gpg --detach-sign --armor -o $pkg.sig $pkg
+    gpg2 --detach-sign --armor -o $pkg.sig $pkg
 done
 rsync --archive --copy-links --verbose --recursive html/* hsrv:/var/www/gustafwaldemarson.com/elpa
