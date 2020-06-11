@@ -2,6 +2,7 @@
 # Deploy the packages and website.
 
 sign=false
+location=hsrv
 while :; do
     case $1 in
         -h|-\?|--help)
@@ -13,9 +14,16 @@ while :; do
         -s|--sign)
             sign=true
             ;;
-        *)        # Default case.
+        -l|--location)
+            location=$2
+            shift
+            ;;
+        -?*)
             printf "Unexpected argument: $1."
             exit 1
+            ;;
+        *)
+            break
             ;;
     esac
     shift
@@ -29,4 +37,4 @@ do
         gpg2 --detach-sign --armor -o $pkg.sig $pkg
     fi
 done
-rsync --archive --copy-links --verbose --recursive html/* hsrv:/var/www/gustafwaldemarson.com/elpa
+rsync --archive --copy-links --verbose --recursive html/packages/* hsrv:/var/www/gustafwaldemarson.com/elpa
