@@ -31,10 +31,15 @@ done
 
 echo '[]' > html/download_counts.json
 echo '{}' > html/build-status.json
+pin=
+if [ "$sign" = true ]; then
+    read -s -p "PIN: " pin
+fi
 for pkg in html/packages/archive-contents html/packages/*.tar;
 do
     if [ "$sign" = true ]; then
-        gpg2 --detach-sign --armor -o $pkg.sig $pkg
+        echo ${pin} | gpg2 --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor -o $pkg.sig $pkg
     fi
 done
+pin=
 rsync --archive --copy-links --verbose --recursive html/packages/* hsrv:/var/www/gustafwaldemarson.com/elpa
