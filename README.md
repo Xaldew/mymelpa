@@ -1,6 +1,6 @@
 # MELPA
 
-[![Build Status](https://travis-ci.org/melpa/melpa.png?branch=master)](https://travis-ci.org/melpa/melpa)
+[![Build Status](https://github.com/melpa/melpa/workflows/CI/badge.svg)](https://github.com/melpa/melpa/actions)
 
 MELPA is a growing collection of `package.el`-compatible Emacs Lisp
 packages built automatically on our server from the upstream source
@@ -29,8 +29,9 @@ read on for details.
 
 ## Usage
 
-To use the MELPA repository, you'll need an Emacs with
-`package.el`, ie. Emacs 24.1 or greater.
+To use the MELPA repository, you'll need an Emacs with `package.el`,
+ie. Emacs 24.1 or greater. To test TLS support you can visit a HTTPS
+URL, for example with `M-x eww RET https://wikipedia.org RET`.
 
 Enable installation of packages from MELPA by adding an entry to
 `package-archives` after `(require 'package)` and before the call to
@@ -38,20 +39,10 @@ Enable installation of packages from MELPA by adding an entry to
 
 ```elisp
 (require 'package)
-(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
-                    (not (gnutls-available-p))))
-       (proto (if no-ssl "http" "https")))
-  (when no-ssl (warn "\
-Your version of Emacs does not support SSL connections,
-which is unsafe because it allows man-in-the-middle attacks.
-There are two things you can do about this warning:
-1. Install an Emacs version that does support SSL and be safe.
-2. Remove this warning from your init file so you won't see it again."))
-  (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
-  ;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
-  ;; and `package-pinned-packages`. Most users will not need or want to do this.
-  ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
-  )
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; Comment/uncomment this line to enable MELPA Stable if desired.  See `package-archive-priorities`
+;; and `package-pinned-packages`. Most users will not need or want to do this.
+;;(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (package-initialize)
 ```
 
@@ -62,22 +53,6 @@ Note that you'll need to run `M-x package-refresh-contents` or `M-x
 package-list-packages` to ensure that Emacs has fetched the MELPA
 package list before you can install packages with `M-x
 package-install` or similar.
-
-Instead of the messy code above, you can of course use something like
-the following instead:
-
-```elisp
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
-```
-
-Before doing so you should understand what it does though.  To make
-sure of that, you should read the official
-[documentation](https://www.gnu.org/software/emacs/manual/html_node/emacs/Packages.html)
-from the Emacs manual.  Also note that the calls to `require` and
-`package-initialize` may be unnecessary depending on the Emacs version
-you use.
 
 ### MELPA Stable
 
@@ -129,7 +104,8 @@ the following form (`[...]` denotes optional or conditional values),
  [:commit "commit"]
  [:branch "branch"]
  [:version-regexp "<regexp>"]
- [:files ("<file1>" ...)])
+ [:files ("<file1>" ...)]
+ [:old-names (<old-name> ...)])
 ```
 
 - `package-name`
@@ -156,7 +132,7 @@ the `git`-based fetchers.
 - `:branch`
 specifies the branch of the git repo to use. This is like `:commit`, but
 it adds the "origin/" prefix automatically. This must be specified when
-using a branch other than "master".
+using a branch other than the default branch.
 
 - `:version-regexp` is a regular expression for extracting a
   version-string from the repository tags.  The default matches
@@ -175,27 +151,35 @@ it should usually be:
          "doc/dir" "doc/*.info" "doc/*.texi" "doc/*.texinfo"
          (:exclude ".dir-locals.el" "test.el" "tests.el" "*-test.el" "*-tests.el"))
 
-    This option is necessary when there are multiple packages in the
-repository and thus the package should only be built from a subset of
-`.el` files. For example, elisp test files should not normally be
-packaged. *Any file specified at any path in the repository is copied
-to the root of the package.* More complex options are available,
-submit an [Issue](https://github.com/melpa/melpa/issues) if the
-specified package requires more complex file specification.
-
-    If the package merely requires some additional files, for example for
-bundling external dependencies, but is otherwise fine with the defaults, it's
-recommended to use `:defaults` as the very first element of this list, which
-causes the default value shown above to be prepended to the specified file list.
-
     Note that elisp in subdirectories is never included by default, so
-you might find it convenient to separate auxiliary files such as tests into
+you might find it convenient to keep your package's elisp in the root
+of your repository, and separate auxiliary files such as tests into
 subdirectories to keep packaging simple.
+
+    The elements of the `:files` list are glob-expanded and processed
+    from left to right to make a list of paths that will be copied
+    into the root of the new package, as if by using `cp -R [SRCPATHS]
+    DEST`. This means a directory like "foo/bar" would become "bar" in
+    the new package. To specify a destination subdirectory, use a list
+    element of the form `(SUBDIR SRCPATH ...)`. Likewise, to filter
+    out paths expanded earlier in the list, use `(:exclude SRCPATH
+    ...)`.
+
+    If your package requires some additional files, but is
+otherwise fine with the defaults, it's recommended to use the special
+element `:defaults` as the very first element of the `:files` list,
+which causes the default value shown above to be prepended to the
+specified file list. For example `:files (:defaults "snippets")` would
+cause the "snippets" subdir to be copied in addition to the defaults.
+
 
 [git]: http://git-scm.com/
 [github]: https://github.com/
 [gitlab]: https://gitlab.com/
 [hg]: https://www.mercurial-scm.org/
+
+- `:old-names` specifies former names of the package, if any.  The value is
+  a list of symbols.
 
 
 ### Example: Single File Repository
