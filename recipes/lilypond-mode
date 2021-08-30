@@ -1,5 +1,5 @@
 (lilypond-mode
- :url "git://git.sv.gnu.org/lilypond.git"
+ :url "https://gitlab.com/lilypond/lilypond.git"
  :files ("elisp/lilypond-font-lock.el"
          "elisp/lilypond-indent.el"
          "elisp/lilypond-init.el"

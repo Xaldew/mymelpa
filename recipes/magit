@@ -1,4 +1,4 @@
-(magit-compat-24.4 :fetcher github
+(magit :fetcher github
        :repo "magit/magit"
        :commit "e03685e813330a750c1d2e525a8f8c74901fccfb"
        :files ("lisp/magit"
