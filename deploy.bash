@@ -37,9 +37,10 @@ if [ "$sign" = true ]; then
 fi
 for pkg in html/packages/archive-contents html/packages/*.tar;
 do
+    echo "Signing: $pkg ..."
     if [ "$sign" = true ]; then
         echo ${pin} | gpg2 --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor -o $pkg.sig $pkg
     fi
 done
 pin=
-rsync --archive --copy-links --verbose --recursive html/packages/* hsrv:/var/www/gustafwaldemarson.com/elpa
+rsync --archive --copy-links --verbose --recursive html/packages/* tenebrous:/srv/www/gustafwaldemarson.com/elpa
