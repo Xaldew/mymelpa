@@ -35,7 +35,7 @@ pin=
 if [ "$sign" = true ]; then
     read -s -p "PIN: " pin
 fi
-for pkg in html/packages/archive-contents html/packages/*.tar;
+for pkg in packages/archive-contents packages/*.tar;
 do
     echo "Signing: $pkg ..."
     if [ "$sign" = true ]; then
@@ -43,4 +43,4 @@ do
     fi
 done
 pin=
-rsync --archive --copy-links --verbose --recursive html/packages/* tenebrous:/srv/www/gustafwaldemarson.com/elpa
+#rsync --archive --copy-links --verbose --recursive packages/* tenebrous:/srv/www/gustafwaldemarson.com/elpa
