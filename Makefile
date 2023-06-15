@@ -1,137 +1,169 @@
+## Settings
+
 TOP := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 -include ./config.mk
 
+# Users should usually prefer this over other *_CONFIG variables.
+# We recommend that the value is set in the included "config.mk".
+USER_CONFIG ?= "()"
+
+# Only intended for "docker/builder/run.sh" and similar scripts.
+# That is also why we add extra quoting when setting EVAL below,
+# instead of here.  Not doing it like that would complicate the
+# quoting needed in scripts.
+BUILD_CONFIG ?= ()
+
+SLEEP ?= 0
+
 SHELL         := bash
 EMACS_COMMAND ?= emacs
 
-PKGDIR  := packages
 RCPDIR  := recipes
-HTMLDIR := html
 WORKDIR := working
-SLEEP   ?= 0
 SANDBOX := sandbox
-STABLE  ?= nil
-ifneq ($(STABLE), nil)
+
+ifndef MELPA_CHANNEL
+PKGDIR  := packages
+HTMLDIR := html
+CHANNEL_CONFIG := "()"
+
+else ifeq ($(MELPA_CHANNEL), unstable)
+PKGDIR  := packages
+HTMLDIR := html
+CHANNEL_CONFIG := "(progn\
+  (setq package-build-stable nil)\
+  (setq package-build-snapshot-version-functions\
+        '(package-build-timestamp-version))\
+  (setq package-build-badge-data '(\"melpa\" \"\#3e999f\")))"
+
+else ifeq ($(MELPA_CHANNEL), stable)
 PKGDIR  := packages-stable
 HTMLDIR := html-stable
+CHANNEL_CONFIG := "(progn\
+  (setq package-build-stable t)\
+  (setq package-build-release-version-functions\
+        '(package-build-tag-version))\
+  (setq package-build-badge-data '(\"melpa stable\" \"\#922793\")))"
 endif
 
-LISP_CONFIG ?= '(progn\
+# You probably don't want to change this.
+LOCATION_CONFIG ?= '(progn\
+  (setq package-build--melpa-base "$(TOP)/")\
   (setq package-build-working-dir "$(TOP)/$(WORKDIR)/")\
   (setq package-build-archive-dir "$(TOP)/$(PKGDIR)/")\
-  (setq package-build-recipes-dir "$(TOP)/$(RCPDIR)/")\
-  (setq package-build-stable $(STABLE))\
-  (setq package-build-write-melpa-badge-images t)\
-  (setq package-build-timeout-secs (when (string= "linux" (symbol-name system-type)) 600)))'
+  (setq package-build-recipes-dir "$(TOP)/$(RCPDIR)/"))'
 
 LOAD_PATH ?= $(TOP)/package-build
 
 EVAL := $(EMACS_COMMAND) --no-site-file --batch \
 $(addprefix -L ,$(LOAD_PATH)) \
---eval $(LISP_CONFIG) \
+--eval $(CHANNEL_CONFIG) \
+--eval $(LOCATION_CONFIG) \
+--eval "$(BUILD_CONFIG)" \
+--eval $(USER_CONFIG) \
 --load package-build.el \
 --eval
 
 TIMEOUT := $(shell which timeout && echo "-k 600 6000")
 
-all: packages packages/archive-contents json index
+.PHONY: clean build json html sandbox
+.FORCE:
 
-## General rules
-html: index
-index: json
-	@echo " • Building html index ..."
-	$(MAKE) -C $(HTMLDIR)
+all: build archive-contents json html
 
+## Build
 
-## Cleanup rules
-clean-working:
-	@echo " • Removing package sources ..."
-	@git clean -dffX $(WORKDIR)/.
+build: $(RCPDIR)/*
 
-clean-packages:
-	@echo " • Removing packages ..."
-	@git clean -dffX $(PKGDIR)/.
-
-clean-json:
-	@echo " • Removing json files ..."
-	@-rm -vf $(HTMLDIR)/archive.json $(HTMLDIR)/recipes.json
-
-clean-sandbox:
-	@echo " • Removing sandbox files ..."
-	@if [ -d '$(SANDBOX)' ]; then \
-		rm -rfv '$(SANDBOX)/elpa'; \
-		rmdir '$(SANDBOX)'; \
-	fi
-
-pull-package-build:
-	git subtree pull --squash -P package-build package-build master
-
-add-package-build-remote:
-	git remote add package-build git@github.com:melpa/package-build.git
-
-clean: clean-working clean-packages clean-json clean-sandbox
-
-packages: $(RCPDIR)/*
-
-packages/archive-contents: .FORCE
-	@echo " • Updating $@ ..."
-	@$(EVAL) '(package-build-dump-archive-contents)'
-
-cleanup:
-	@$(EVAL) '(package-build-cleanup)'
-
-## Json rules
-html/archive.json: $(PKGDIR)/archive-contents
-	@echo " • Building $@ ..."
-	@$(EVAL) '(package-build-archive-alist-as-json "html/archive.json")'
-
-html/recipes.json: $(RCPDIR)/.dirstamp
-	@echo " • Building $@ ..."
-	@$(EVAL) '(package-build-recipe-alist-as-json "html/recipes.json")'
-
-html-stable/archive.json: $(PKGDIR)/archive-contents
-	@echo " • Building $@ ..."
-	@$(EVAL) '(package-build-archive-alist-as-json "html-stable/archive.json")'
-
-html-stable/recipes.json: $(RCPDIR)/.dirstamp
-	@echo " • Building $@ ..."
-	@$(EVAL) '(package-build-recipe-alist-as-json "html-stable/recipes.json")'
-
-json: $(HTMLDIR)/archive.json $(HTMLDIR)/recipes.json
-
-$(RCPDIR)/.dirstamp: .FORCE
-	@[[ ! -e $@ || "$$(find $(@D) -newer $@ -print -quit)" != "" ]] \
-	&& touch $@ || exit 0
-
-
-## Recipe rules
 $(RCPDIR)/%: .FORCE
 	@echo " • Building package $(@F) ..."
 	@exec 2>&1; exec &> >(tee $(PKGDIR)/$(@F).log); \
 	  $(TIMEOUT) $(EVAL) "(package-build-archive \"$(@F)\")" \
 	  && echo " ✓ Success:" \
-	  && ls -lsh $(PKGDIR)/$(@F)-*
-	@test $(SLEEP) -gt 0 && echo " Sleeping $(SLEEP) seconds ..." && sleep $(SLEEP) || true
+	  && ls -lsh $(PKGDIR)/$(@F)-[0-9]*
+	@test $(SLEEP) -gt 0 && echo " Sleeping $(SLEEP) seconds ..." \
+	  && sleep $(SLEEP) || true
 	@echo
 
+## Metadata
+
+archive-contents: .FORCE
+	@$(EVAL) '(package-build-dump-archive-contents)'
+
+json: .FORCE
+	@echo " • Building json indexes ..."
+	@$(EVAL) '(package-build-archive-alist-as-json "$(HTMLDIR)/archive.json")'
+	@$(EVAL) '(package-build-recipe-alist-as-json "$(HTMLDIR)/recipes.json")'
+
+html: json
+	@echo " • Building html index ..."
+	$(MAKE) -C $(HTMLDIR)
+
+$(RCPDIR)/.dirstamp: .FORCE
+	@[[ ! -e $@ || "$$(find $(@D) -newer $@ -print -quit)" != "" ]] \
+	&& touch $@ || exit 0
+
+## Cleanup rules
+
+clean-working:
+	@echo " • Removing package sources ..."
+	@git clean -dffX $(WORKDIR)/.
+
+clean-packages:
+	@echo " • Removing $(PKGDIR)/* ..."
+	@git clean -dffX $(PKGDIR)/.
+
+clean-json:
+	@echo " • Removing $(HTMLDIR)/*.json ..."
+	@-rm -vf $(HTMLDIR)/archive.json $(HTMLDIR)/recipes.json
+
+clean-sandbox:
+	@echo " • Removing sandbox files ..."
+	@if [ -d '$(SANDBOX)' ]; then \
+	  rm -rfv '$(SANDBOX)/elpa'; \
+	  rmdir '$(SANDBOX)'; \
+	fi
+
+clean: .FORCE
+	MELPA_CHANNEL=unstable make clean-packages clean-json clean-sandbox
+	MELPA_CHANNEL=stable   make clean-packages clean-json clean-sandbox
+
+## Update package-build
+
+PACKAGE_BUILD_REPO ?= "https://github.com/melpa/package-build"
+
+pull-package-build:
+	git fetch $(PACKAGE_BUILD_REPO)
+	git -c "commit.gpgSign=true" subtree merge \
+	-m "Merge Package-Build $$(git describe FETCH_HEAD)" \
+	--squash -P package-build FETCH_HEAD
 
 ## Sandbox
-sandbox: packages/archive-contents
+
+sandbox: .FORCE
 	@echo " • Building sandbox ..."
 	@mkdir -p $(SANDBOX)
 	@$(EMACS_COMMAND) -Q \
-		--eval '(setq user-emacs-directory (file-truename "$(SANDBOX)"))' \
-		-l package \
-		--eval "(add-to-list 'package-archives '(\"gnu\" . \"https://elpa.gnu.org/packages/\") t)" \
-		--eval "(add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
-		--eval "(add-to-list 'package-archives '(\"sandbox\" . \"$(TOP)/$(PKGDIR)/\") t)" \
-		--eval "(package-refresh-contents)" \
-		--eval "(package-initialize)" \
-		--eval '(setq sandbox-install-package "$(INSTALL)")' \
-		--eval "(unless (string= \"\" sandbox-install-package) (package-install (intern sandbox-install-package)))" \
-		--eval "(when (get-buffer \"*Compile-Log*\") (display-buffer \"*Compile-Log*\"))"
+	  --eval '(package-build-dump-archive-contents)' \
+	  --eval '(setq user-emacs-directory (file-truename "$(SANDBOX)"))' \
+	  --eval '(setq package-user-dir (locate-user-emacs-file "elpa"))' \
+	  -l package \
+	  --eval "(add-to-list 'package-archives \
+	            '(\"gnu\" . \"https://elpa.gnu.org/packages/\") t)" \
+	  --eval "(add-to-list 'package-archives \
+	            '(\"melpa\" . \"https://melpa.org/packages/\") t)" \
+	  --eval "(add-to-list 'package-archives \
+	            '(\"sandbox\" . \"$(TOP)/$(PKGDIR)/\") t)" \
+	  --eval "(package-refresh-contents)" \
+	  --eval "(package-initialize)" \
+	  --eval '(setq sandbox-install-package "$(INSTALL)")' \
+	  --eval "(unless (string= \"\" sandbox-install-package) \
+	            (package-install (intern sandbox-install-package)))" \
+	  --eval "(when (get-buffer \"*Compile-Log*\") \
+	            (display-buffer \"*Compile-Log*\"))"
 
-
-.PHONY: clean build index html json sandbox
-.FORCE:
+# Local Variables:
+# outline-regexp: "#\\(#+\\)"
+# eval: (outline-minor-mode)
+# End:

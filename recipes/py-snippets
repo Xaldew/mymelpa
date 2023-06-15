@@ -1,4 +1,4 @@
 (py-snippets
  :repo "Xaldew/py-snippets"
  :fetcher github
- :files ("*.el" "snippets" ".nosearch"))
+ :files (:defaults "snippets"))
