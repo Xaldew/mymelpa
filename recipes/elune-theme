@@ -1,2 +1,0 @@
-(elune-theme :repo "xcatalyst/elune-theme"
-              :fetcher github)
