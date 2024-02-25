@@ -24,7 +24,7 @@ else
 EMACS ?= emacs
 endif
 
-RCPDIR  := recipes
+RCPDIR  := my-recipes
 WORKDIR := working
 SANDBOX := sandbox
 
