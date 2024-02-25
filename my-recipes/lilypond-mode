@@ -1,0 +1,9 @@
+(lilypond-mode
+ :url "https://gitlab.com/lilypond/lilypond.git"
+ :files ("elisp/lilypond-font-lock.el"
+         "elisp/lilypond-indent.el"
+         "elisp/lilypond-init.el"
+         "elisp/lilypond-mode.el"
+         "elisp/lilypond-song.el"
+         "elisp/lilypond-what-beat.el")
+ :fetcher git)
