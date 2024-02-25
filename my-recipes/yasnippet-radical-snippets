@@ -1,0 +1,4 @@
+(yasnippet-radical-snippets
+ :repo "Xaldew/yasnippet-radical-snippets"
+ :fetcher github
+ :files ("*.el" "snippets" ".nosearch"))
