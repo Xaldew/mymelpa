@@ -11,7 +11,7 @@ help helpall::
 	$(info Building)
 	$(info ========)
 	$(info )
-	$(info make recipes/<package>                    Build <package>)
+	$(info make my-recipes/<package>                 Build <package>)
 	$(info make build-channel                        Build "$(CHANNEL)" channel)
 	$(info make build-channels                       Build all channels)
 	$(info make CHANNEL=<channel> recipes/<package>  Build <package> on <channel>)
@@ -138,7 +138,7 @@ else
 endif
 
 PKGDIR ?= $(CHANNEL)
-RCPDIR ?= recipes
+RCPDIR ?= my-recipes
 SRCDIR ?= working
 PATH_CONFIG ?= '(progn\
   (setq package-build-directory "$(TOP)")\
