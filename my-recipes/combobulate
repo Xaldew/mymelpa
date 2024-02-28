@@ -1,3 +1,4 @@
 (combobulate
  :fetcher github
- :repo "mickeynp/combobulate")
+ :repo "mickeynp/combobulate"
+ :branch "development")
