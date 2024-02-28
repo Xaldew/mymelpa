@@ -2,4 +2,5 @@
  :fetcher github
  :repo "llvm/llvm-project"
  :files ("llvm/utils/emacs/llvm-mode.el"
-         "llvm/utils/emacs/tablegen-mode.el"))
+         "llvm/utils/emacs/tablegen-mode.el"
+         "llvm/utils/emacs/llvm-mir-mode.el"))
