@@ -1,0 +1,3 @@
+(glsl-mode
+ :fetcher github
+ :repo "Xaldew/glsl-mode")
