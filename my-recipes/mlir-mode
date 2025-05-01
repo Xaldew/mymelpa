@@ -1,4 +1,5 @@
 (mlir-mode
  :fetcher github
  :repo "llvm/llvm-project"
- :files ("mlir/utils/emacs/*.el"))
+ :files ("mlir/utils/emacs/mlir-lsp-client.el"
+         "mlir/utils/emacs/mlir-mode.el"))
