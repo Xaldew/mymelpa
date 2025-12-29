@@ -1,0 +1,4 @@
+(pbrt-mode
+ :fetcher git
+ :url "waldesrv:pbrt-mode-el.git"
+ :files ("pbrt-mode.el"))
